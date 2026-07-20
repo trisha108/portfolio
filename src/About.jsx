@@ -51,7 +51,7 @@ const LINKS = [
   { key: "email", href: "mailto:trishashishodiya10@gmail.com", display: "trishashishodiya10@gmail.com" },
   { key: "linkedin", href: "https://www.linkedin.com/in/trishashishodiya/", display: "linkedin.com/in/trishashishodiya" },
   { key: "github", href: "https://github.com/trisha108", display: "github.com/trisha108" },
-  { key: "drive", href: "https://drive.google.com/drive/folders/1myK272K0iIXg-qCNdK82tl2UGvosc-Rk?usp=sharing", display: "View Resume" },
+  { key: "drive", href: "https://drive.google.com/drive/u/0/folders/1myK272K0iIXg-qCNdK82tl2UGvosc-Rk", display: "View Resume" },
 ];
 
 const LINK_ICONS = {
