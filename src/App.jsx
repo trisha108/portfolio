@@ -5,6 +5,19 @@ import About from "./About";
 import Work from "./Work";
 import ProjectCube from "./ProjectCube";
 
+// Simple hook: true when viewport is phone-sized
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= breakpoint : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [splineReady, setSplineReady] = useState(false);
@@ -13,6 +26,7 @@ export default function App() {
   const [activeCubeProject, setActiveCubeProject] = useState(null);
   const splineRef = useRef(null);
   const hintRef = useRef(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (loaded && hintRef.current) {
@@ -120,11 +134,14 @@ export default function App() {
               transform: "translateX(-50%)", opacity: 0,
               display: "flex", alignItems: "center", gap: "8px",
               pointerEvents: "none",
+              width: "max-content",
+              maxWidth: "90vw",
             }}>
               <span style={{
                 color: "rgba(175,197,239,0.4)", fontSize: "11px",
                 fontFamily: "monospace", letterSpacing: "0.2em",
-              }}>HOVER A FACE · CLICK TO EXPLORE</span>
+                textAlign: "center",
+              }}>{isMobile ? "TAP A FACE TO EXPLORE" : "HOVER A FACE · CLICK TO EXPLORE"}</span>
             </div>
           )}
         </div>
@@ -154,8 +171,12 @@ export default function App() {
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0,
           zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 40px",
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          alignItems: isMobile ? "flex-start" : "center",
+          justifyContent: "space-between",
+          gap: isMobile ? "10px" : 0,
+          padding: isMobile ? "12px 16px" : "16px 40px",
           pointerEvents: "none",
           background: workOpen ? "rgba(5,10,26,0.9)" : "none",
           backdropFilter: workOpen ? "blur(6px)" : "none",
@@ -168,8 +189,9 @@ export default function App() {
               onClick={goHome}
               style={{
                 fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                fontSize: "28px", fontWeight: "900",
-                letterSpacing: "-2px",
+                fontSize: isMobile ? "20px" : "28px",
+                fontWeight: "900",
+                letterSpacing: isMobile ? "-1px" : "-2px",
                 background: "linear-gradient(135deg, #166534, #4ade80, #bbf7d0)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -181,7 +203,13 @@ export default function App() {
             <div />
           )}
 
-          <div style={{ display: "flex", gap: "8px", pointerEvents: "all" }}>
+          <div style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: isMobile ? "6px" : "8px",
+            pointerEvents: "all",
+            maxWidth: "100%",
+          }}>
             {[
               { label: "CUBE", action: goHome },
               { label: "PROJECTS", action: () => { goHome(); setTimeout(() => setActiveCubeProject("__overview__"), 50); } },
@@ -195,10 +223,13 @@ export default function App() {
                   background: isAboutPage ? "#4ade80" : "none",
                   border: `1px solid ${navBorder}`,
                   color: navColor,
-                  fontSize: "10px", fontFamily: "monospace",
-                  letterSpacing: "0.2em", padding: "8px 20px",
+                  fontSize: isMobile ? "9px" : "10px",
+                  fontFamily: "monospace",
+                  letterSpacing: isMobile ? "0.12em" : "0.2em",
+                  padding: isMobile ? "7px 12px" : "8px 20px",
                   borderRadius: "2px", cursor: "pointer",
                   transition: "all 0.2s",
+                  whiteSpace: "nowrap",
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.background = isAboutPage ? "#050a1a" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.15)";
