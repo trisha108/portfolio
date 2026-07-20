@@ -5,6 +5,19 @@ import ScrollCube from "./ScrollCube";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// true when viewport is phone-sized
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= breakpoint : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 const colorStops = [
   { bg: "#050a1a", ts: "#4ade80" },
   { bg: "#071a0d", ts: "#bbf7d0" },
@@ -40,7 +53,7 @@ function getColorAtScroll(scrollFraction) {
 
 const gradientColor = "linear-gradient(135deg, #166534, #4ade80, #bbf7d0)";
 
-function ToolCard({ name }) {
+function ToolCard({ name, isMobile }) {
   const [hovered, setHovered] = useState(false);
   return (
     <div
@@ -49,8 +62,8 @@ function ToolCard({ name }) {
       style={{
         backgroundColor: "#fff",
         borderRadius: "12px",
-        padding: "40px 32px",
-        minHeight: "160px",
+        padding: isMobile ? "24px 16px" : "40px 32px",
+        minHeight: isMobile ? "90px" : "160px",
         display: "flex", alignItems: "center", justifyContent: "center",
         cursor: "default",
         transition: "transform 0.3s ease, box-shadow 0.3s ease",
@@ -60,8 +73,9 @@ function ToolCard({ name }) {
     >
       <span style={{
         fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-        fontSize: "clamp(20px, 2.5vw, 32px)",
-        fontWeight: "800", letterSpacing: "-1px",
+        fontSize: isMobile ? "16px" : "clamp(20px, 2.5vw, 32px)",
+        fontWeight: "800", letterSpacing: "-0.5px",
+        textAlign: "center",
         background: hovered ? gradientColor : "none",
         WebkitBackgroundClip: hovered ? "text" : "unset",
         WebkitTextFillColor: hovered ? "transparent" : "#1a1a1a",
@@ -71,7 +85,7 @@ function ToolCard({ name }) {
   );
 }
 
-function StatBox({ value, description, colors }) {
+function StatBox({ value, description, colors, isMobile }) {
   return (
     <div style={{
       backgroundColor: "#fff", borderRadius: "12px",
@@ -86,18 +100,19 @@ function StatBox({ value, description, colors }) {
         ))}
       </div>
       <div style={{
-        padding: "40px", display: "flex", flexDirection: "column",
+        padding: isMobile ? "28px 20px" : "40px",
+        display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
       }}>
         <span style={{
           fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-          fontSize: "clamp(60px, 10vw, 100px)",
+          fontSize: isMobile ? "56px" : "clamp(60px, 10vw, 100px)",
           fontWeight: "900", color: colors.ts,
-          lineHeight: 1, letterSpacing: "-4px", transition: "color 0.4s",
+          lineHeight: 1, letterSpacing: "-3px", transition: "color 0.4s",
         }}>{value}</span>
         <p style={{
           fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-          fontSize: "20px", color: "#888",
+          fontSize: isMobile ? "15px" : "20px", color: "#888",
           textAlign: "center", margin: "12px 0 0",
           maxWidth: "240px", lineHeight: "1.6",
         }}>{description}</p>
@@ -106,11 +121,12 @@ function StatBox({ value, description, colors }) {
   );
 }
 
-function DateBox({ start, end, colors }) {
+function DateBox({ start, end, colors, isMobile }) {
   return (
     <div style={{
       backgroundColor: "#050a1a", borderRadius: "12px",
-      padding: "40px 24px", minHeight: "160px",
+      padding: isMobile ? "28px 16px" : "40px 24px",
+      minHeight: isMobile ? "110px" : "160px",
       display: "flex", alignItems: "center", justifyContent: "center",
       gap: "12px",
     }}>
@@ -121,7 +137,7 @@ function DateBox({ start, end, colors }) {
       }}>{"{"}</span>
       <span style={{
         fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-        fontSize: "clamp(12px, 1.2vw, 16px)",
+        fontSize: isMobile ? "13px" : "clamp(12px, 1.2vw, 16px)",
         fontWeight: "800", color: colors.ts,
         textAlign: "center", lineHeight: 1.4, transition: "color 0.4s",
       }}>{start}<br />—<br />{end}</span>
@@ -135,89 +151,110 @@ function DateBox({ start, end, colors }) {
 }
 
 function WorkSection({ number, company, role, location, bullet, colors, boxRefs, boxStartIdx, tools, stat, testimonial, dateStart, dateEnd }) {
+  const isMobile = useIsMobile();
   return (
     <section style={{
       backgroundColor: "#eeece8",
-      padding: "80px 40px 60px",
+      padding: isMobile ? "56px 20px 40px" : "80px 40px 60px",
       borderBottom: "1px solid rgba(0,0,0,0.1)",
     }}>
       <div style={{
-        paddingBottom: "32px",
+        paddingBottom: isMobile ? "20px" : "32px",
         borderBottom: "1px solid rgba(0,0,0,0.1)",
-        marginBottom: "40px",
+        marginBottom: isMobile ? "28px" : "40px",
       }}>
         <span style={{
           fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-          fontSize: "15px", color: "#888", letterSpacing: "0.1em",
+          fontSize: isMobile ? "13px" : "15px", color: "#888", letterSpacing: "0.1em",
         }}>Work Experience</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px", alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-          <span style={{
-            fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(60px, 10vw, 180px)",
-            fontWeight: "900", color: "#1a1a1a",
-            lineHeight: "0.85", letterSpacing: "-4px",
-          }}>{number}</span>
-          {stat && (
-            <div ref={el => { if (boxRefs) boxRefs.current[boxStartIdx] = el; }}>
-              <StatBox {...stat} colors={colors} />
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+        gap: isMobile ? "28px" : "40px",
+        alignItems: "start",
+      }}>
+        {/* On mobile put text first, number+stat second for better reading order */}
+        <div style={{
+          display: "flex", flexDirection: "column",
+          gap: isMobile ? "14px" : "20px",
+          paddingTop: "8px",
+          order: isMobile ? 1 : 2,
+        }}>
           <h2 style={{
             fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(32px, 4vw, 54px)",
+            fontSize: isMobile ? "30px" : "clamp(32px, 4vw, 54px)",
             fontWeight: "800", color: "#1a1a1a",
             margin: 0, lineHeight: 1.1, letterSpacing: "-1px",
           }}>{company}</h2>
           <span style={{
             fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "20px", color: "#888", letterSpacing: "0.1em",
+            fontSize: isMobile ? "15px" : "20px", color: "#888", letterSpacing: "0.08em",
           }}>{role}{location ? ` · ${location}` : ""}</span>
 
           <p style={{
             fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(16px, 1.6vw, 22px)",
+            fontSize: isMobile ? "15px" : "clamp(16px, 1.6vw, 22px)",
             fontWeight: "700", color: "#1a1a1a",
             lineHeight: "1.5", margin: 0,
           }}>{bullet}</p>
 
           <div ref={el => { if (boxRefs) boxRefs.current[boxStartIdx + 1] = el; }}>
-            <DateBox start={dateStart} end={dateEnd} colors={colors} />
+            <DateBox start={dateStart} end={dateEnd} colors={colors} isMobile={isMobile} />
           </div>
+        </div>
+
+        <div style={{
+          display: "flex", flexDirection: "column",
+          gap: isMobile ? "20px" : "32px",
+          order: isMobile ? 2 : 1,
+        }}>
+          <span style={{
+            fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
+            fontSize: isMobile ? "64px" : "clamp(60px, 10vw, 180px)",
+            fontWeight: "900", color: "#1a1a1a",
+            lineHeight: "0.85", letterSpacing: "-4px",
+          }}>{number}</span>
+          {stat && (
+            <div ref={el => { if (boxRefs) boxRefs.current[boxStartIdx] = el; }}>
+              <StatBox {...stat} colors={colors} isMobile={isMobile} />
+            </div>
+          )}
         </div>
       </div>
 
       {tools && tools.length > 0 && (
         <div style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${tools.length}, 1fr)`,
-          gap: "20px", marginTop: "40px",
+          gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : `repeat(${tools.length}, 1fr)`,
+          gap: isMobile ? "12px" : "20px",
+          marginTop: isMobile ? "28px" : "40px",
         }}>
           {tools.map((tool, i) => (
             <div key={tool} ref={el => { if (boxRefs) boxRefs.current[boxStartIdx + 2 + i] = el; }}>
-              <ToolCard name={tool} />
+              <ToolCard name={tool} isMobile={isMobile} />
             </div>
           ))}
         </div>
       )}
 
       {testimonial && (
-        <div style={{ marginTop: "60px", paddingTop: "40px", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
+        <div style={{
+          marginTop: isMobile ? "40px" : "60px",
+          paddingTop: isMobile ? "28px" : "40px",
+          borderTop: "1px solid rgba(0,0,0,0.08)",
+        }}>
           <div style={{
             fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(18px, 2.5vw, 36px)",
+            fontSize: isMobile ? "20px" : "clamp(18px, 2.5vw, 36px)",
             fontWeight: "800", color: "#1a1a1a",
-            lineHeight: 1.2, letterSpacing: "-1px", marginBottom: "20px",
+            lineHeight: 1.25, letterSpacing: "-0.5px", marginBottom: "20px",
           }}>
             "{testimonial.quote}"
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div style={{ width: "32px", height: "1px", backgroundColor: "#1a1a1a" }} />
+            <div style={{ width: "32px", height: "1px", backgroundColor: "#1a1a1a", flexShrink: 0 }} />
             <div>
               <div style={{ fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif", fontSize: "13px", color: "#1a1a1a", fontWeight: "600" }}>{testimonial.name}</div>
               <div style={{ fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif", fontSize: "12px", color: "#888" }}>{testimonial.title}</div>
@@ -243,28 +280,34 @@ function GapDivider() {
 }
 
 function AchievementSection({ company, role, highlight, colors, dateStart, dateEnd }) {
+  const isMobile = useIsMobile();
   return (
     <section style={{
-      padding: "80px 40px",
+      padding: isMobile ? "56px 20px" : "80px 40px",
       borderBottom: "1px solid rgba(255,255,255,0.06)",
       background: "transparent",
     }}>
       <div style={{
-        paddingBottom: "32px",
+        paddingBottom: isMobile ? "20px" : "32px",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        marginBottom: "40px",
+        marginBottom: isMobile ? "28px" : "40px",
       }}>
         <span style={{
           fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-          fontSize: "15px", color: "rgba(175,197,239,0.4)", letterSpacing: "0.1em",
+          fontSize: isMobile ? "13px" : "15px", color: "rgba(175,197,239,0.4)", letterSpacing: "0.1em",
         }}>Achievement</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px", alignItems: "center" }}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+        gap: isMobile ? "24px" : "40px",
+        alignItems: "center",
+      }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <h2 style={{
             fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(28px, 3.5vw, 48px)",
+            fontSize: isMobile ? "26px" : "clamp(28px, 3.5vw, 48px)",
             fontWeight: "800", color: "#fff",
             margin: 0, lineHeight: 1.1, letterSpacing: "-1px",
           }}>{company}</h2>
@@ -283,13 +326,14 @@ function AchievementSection({ company, role, highlight, colors, dateStart, dateE
 
         <div style={{
           border: `1px solid ${colors.ts}40`,
-          borderRadius: "12px", padding: "32px 40px",
+          borderRadius: "12px",
+          padding: isMobile ? "24px 20px" : "32px 40px",
           display: "flex", alignItems: "center", justifyContent: "center",
           background: `${colors.ts}08`,
         }}>
           <span style={{
             fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(16px, 1.8vw, 22px)",
+            fontSize: isMobile ? "17px" : "clamp(16px, 1.8vw, 22px)",
             fontWeight: "700", color: colors.ts,
             textAlign: "center", lineHeight: "1.4",
             transition: "color 0.4s",
@@ -302,35 +346,36 @@ function AchievementSection({ company, role, highlight, colors, dateStart, dateE
 }
 
 function QuotePage({ quote, name, title, colors }) {
+  const isMobile = useIsMobile();
   return (
     <section style={{
-      minHeight: "70vh",
+      minHeight: isMobile ? "auto" : "70vh",
       background: "transparent",
       display: "flex", flexDirection: "column",
-      padding: "40px 40px 80px",
+      padding: isMobile ? "40px 20px 60px" : "40px 40px 80px",
       position: "relative", overflow: "hidden",
       borderBottom: "1px solid rgba(255,255,255,0.06)",
     }}>
       <div style={{
-        paddingBottom: "32px",
+        paddingBottom: isMobile ? "20px" : "32px",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        marginBottom: "60px",
+        marginBottom: isMobile ? "36px" : "60px",
       }}>
         <span style={{
           fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-          fontSize: "15px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.15em",
+          fontSize: isMobile ? "13px" : "15px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.15em",
         }}>Quotes</span>
       </div>
 
-      <div style={{ maxWidth: "60%", zIndex: 2 }}>
+      <div style={{ maxWidth: isMobile ? "100%" : "60%", zIndex: 2 }}>
         <div style={{
           fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-          fontSize: "clamp(28px, 4vw, 56px)",
+          fontSize: isMobile ? "24px" : "clamp(28px, 4vw, 56px)",
           fontWeight: "900", color: "#fff",
-          lineHeight: 1.15, letterSpacing: "-1.5px", marginBottom: "40px",
+          lineHeight: 1.2, letterSpacing: "-1px", marginBottom: isMobile ? "28px" : "40px",
         }}>"{quote}"</div>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{ width: "40px", height: "1px", backgroundColor: "rgba(255,255,255,0.4)" }} />
+          <div style={{ width: "40px", height: "1px", backgroundColor: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
           <div>
             <div style={{ fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif", fontSize: "14px", color: "#fff", fontWeight: "600" }}>{name}</div>
             <div style={{ fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>{title}</div>
@@ -339,12 +384,12 @@ function QuotePage({ quote, name, title, colors }) {
       </div>
 
       <div style={{
-        position: "absolute", right: "-60px", top: "50%",
+        position: "absolute", right: isMobile ? "-30px" : "-60px", top: "50%",
         transform: "translateY(-50%)",
         zIndex: 1, userSelect: "none", pointerEvents: "none",
         fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-        fontSize: "clamp(240px, 32vw, 420px)",
-        fontWeight: "900", letterSpacing: "-20px",
+        fontSize: isMobile ? "160px" : "clamp(240px, 32vw, 420px)",
+        fontWeight: "900", letterSpacing: isMobile ? "-10px" : "-20px",
         color: colors.ts, opacity: 0.1, lineHeight: 1,
         transition: "color 0.4s",
       }}>TS</div>
@@ -358,6 +403,7 @@ export default function Work({ onClose, onEnd }) {
   const heroRef = useRef(null);
   const boxRefs = useRef([]);
   const [colors, setColors] = useState({ bg: "#050a1a", ts: "#4ade80" });
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     gsap.fromTo(containerRef.current,
@@ -422,7 +468,7 @@ export default function Work({ onClose, onEnd }) {
       position: "fixed", inset: 0, zIndex: 200,
       backgroundColor: "transparent",
     }}>
-      <ScrollCube scrollRef={scrollRef} />
+      {!isMobile && <ScrollCube scrollRef={scrollRef} />}
 
       <div ref={scrollRef} style={{
         position: "absolute", inset: 0,
@@ -431,16 +477,17 @@ export default function Work({ onClose, onEnd }) {
         {/* HERO */}
         <section ref={heroRef} style={{
           height: "100vh", display: "flex", flexDirection: "column",
-          justifyContent: "space-between", padding: "32px 40px 40px",
+          justifyContent: "space-between",
+          padding: isMobile ? "80px 20px 32px" : "32px 40px 40px",
           position: "relative", overflow: "hidden",
           background: "transparent",
         }}>
           <div style={{
-            position: "absolute", right: "-40px", top: "50%",
+            position: "absolute", right: isMobile ? "-20px" : "-40px", top: "50%",
             transform: "translateY(-50%)",
             fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-            fontSize: "clamp(280px, 40vw, 520px)",
-            fontWeight: "900", letterSpacing: "-20px",
+            fontSize: isMobile ? "200px" : "clamp(280px, 40vw, 520px)",
+            fontWeight: "900", letterSpacing: isMobile ? "-10px" : "-20px",
             color: colors.ts, opacity: 0.12, lineHeight: 1,
             userSelect: "none", transition: "color 0.4s", zIndex: 1,
           }}>TS</div>
@@ -451,10 +498,10 @@ export default function Work({ onClose, onEnd }) {
             </div>
             <h1 style={{
               fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
-              fontSize: "clamp(36px, 5vw, 72px)",
+              fontSize: isMobile ? "34px" : "clamp(36px, 5vw, 72px)",
               fontWeight: "900", color: "#fff", margin: 0,
-              lineHeight: 1.05, letterSpacing: "-2px", maxWidth: "700px",
-              marginTop: "40px",
+              lineHeight: 1.1, letterSpacing: "-1.5px", maxWidth: "700px",
+              marginTop: isMobile ? "24px" : "40px",
             }}>Tech is the what.<br />Business is the why.<br />I build for both.</h1>
           </div>
         </section>

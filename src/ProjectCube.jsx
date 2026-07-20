@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 
+// true when viewport is phone-sized
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= breakpoint : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 const PROJECTS = [
   {
     id: "chain",
@@ -190,6 +203,212 @@ function MetricCard({ project, small }) {
     </div>
   );
 }
+
+/* ═══════════════════════ MOBILE EXPERIENCE ═══════════════════════ */
+
+function MobileProjectList({ onSelect }) {
+  return (
+    <div style={{
+      position: "absolute", inset: 0,
+      overflowY: "auto", overflowX: "hidden",
+      WebkitOverflowScrolling: "touch",
+      padding: "80px 20px 40px",
+      boxSizing: "border-box",
+    }}>
+      <div style={{
+        fontFamily: "monospace", fontSize: "10px",
+        color: "rgba(74,222,128,0.5)", letterSpacing: "0.25em",
+        textAlign: "center", marginBottom: "24px",
+      }}>PROJECTS · TAP TO EXPLORE</div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "480px", margin: "0 auto" }}>
+        {PROJECTS.map((p, i) => (
+          <div
+            key={p.id}
+            onClick={() => onSelect(i)}
+            style={{
+              background: p.bg,
+              border: `1px solid ${p.color}70`,
+              borderRadius: "12px",
+              padding: "22px 20px",
+              cursor: "pointer",
+              display: "flex", flexDirection: "column", gap: "10px",
+            }}
+          >
+            <div style={{
+              fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "20px", fontWeight: "900", color: "#fff", lineHeight: 1.15,
+            }}>{p.name.toUpperCase()}</div>
+            <div style={{
+              fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "14px", color: `${p.color}b0`, lineHeight: 1.4,
+            }}>{p.subtitle}</div>
+            <div style={{
+              fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "11px", color: `${p.color}70`, lineHeight: 1.6, letterSpacing: "0.03em",
+            }}>{p.tools}</div>
+            <div style={{
+              fontFamily: "monospace", fontSize: "9px",
+              color: p.color, letterSpacing: "0.2em", marginTop: "4px",
+            }}>VIEW PROJECT →</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MobileProjectDetail({ projectIdx, onBack, onNext, isLast }) {
+  const p = PROJECTS[projectIdx];
+  const scrollRef = useRef(null);
+
+  // reset scroll to top when project changes
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [projectIdx]);
+
+  return (
+    <div ref={scrollRef} style={{
+      position: "absolute", inset: 0,
+      overflowY: "auto", overflowX: "hidden",
+      WebkitOverflowScrolling: "touch",
+      padding: "80px 20px 40px",
+      boxSizing: "border-box",
+    }}>
+      <div style={{ maxWidth: "520px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "18px" }}>
+
+        {/* back link */}
+        <button
+          onClick={onBack}
+          style={{
+            alignSelf: "flex-start",
+            background: "none", border: "none", cursor: "pointer",
+            fontFamily: "monospace", fontSize: "10px",
+            color: "rgba(175,197,239,0.6)", letterSpacing: "0.2em",
+            padding: "4px 0",
+          }}
+        >← ALL PROJECTS</button>
+
+        {/* header card */}
+        <div style={{
+          background: p.bg,
+          border: `1px solid ${p.border}`,
+          borderRadius: "12px",
+          padding: "24px 20px",
+          display: "flex", flexDirection: "column", gap: "12px",
+        }}>
+          <div style={{
+            fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
+            fontSize: "26px", fontWeight: "900", color: "#fff",
+            lineHeight: 1.1, letterSpacing: "-0.5px",
+          }}>{p.name.toUpperCase()}</div>
+          <div style={{
+            fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
+            fontSize: "14px", color: `${p.color}b0`, lineHeight: 1.4,
+          }}>{p.subtitle}</div>
+          <div style={{
+            fontFamily: "Inter, 'Helvetica Neue', Arial, sans-serif",
+            fontSize: "11px", color: `${p.color}70`, lineHeight: 1.7,
+          }}>{p.tools}</div>
+        </div>
+
+        {/* metric card */}
+        <div style={{ borderRadius: "12px", overflow: "hidden", minHeight: "170px", display: "flex" }}>
+          <MetricCard project={p} small={false} />
+        </div>
+
+        {/* images with captions */}
+        {p.images.map((src, i) => (
+          <div key={src} style={{
+            border: `1px solid ${p.color}40`,
+            borderRadius: "12px",
+            overflow: "hidden",
+            background: p.id === "youtube" ? "#f8f9fb" : "#050a1a",
+          }}>
+            <img
+              src={src}
+              alt={p.captions[i] || `${p.name} insight ${i + 1}`}
+              style={{ width: "100%", height: "auto", display: "block" }}
+            />
+            {p.captions[i] && (
+              <div style={{
+                padding: "12px 14px",
+                background: "rgba(0,0,0,0.75)",
+                fontFamily: "monospace", fontSize: "11px",
+                color: "rgba(255,255,255,0.85)",
+                lineHeight: 1.6, letterSpacing: "0.03em",
+              }}>{p.captions[i]}</div>
+            )}
+          </div>
+        ))}
+
+        {/* prev / next navigation */}
+        <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+          <button
+            onClick={onBack}
+            style={{
+              flex: 1,
+              background: "none",
+              border: "1px solid rgba(175,197,239,0.35)",
+              borderRadius: "8px",
+              color: "rgba(175,197,239,0.85)",
+              fontFamily: "monospace", fontSize: "10px",
+              letterSpacing: "0.15em",
+              padding: "14px 10px", cursor: "pointer",
+            }}
+          >ALL PROJECTS</button>
+          <button
+            onClick={onNext}
+            style={{
+              flex: 1,
+              background: `${p.color}18`,
+              border: `1px solid ${p.color}`,
+              borderRadius: "8px",
+              color: p.color,
+              fontFamily: "monospace", fontSize: "10px",
+              letterSpacing: "0.15em",
+              padding: "14px 10px", cursor: "pointer",
+            }}
+          >{isLast ? "WORK & MORE →" : "NEXT PROJECT →"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileProjects({ projectId, onEnd }) {
+  const startIdx = projectId === "__overview__" || !projectId
+    ? null
+    : Math.max(PROJECTS.findIndex(pr => pr.id === projectId), 0);
+
+  // If opened from a specific cube face, jump straight to that project's detail
+  const [selectedIdx, setSelectedIdx] = useState(startIdx);
+
+  const handleNext = () => {
+    if (selectedIdx >= PROJECTS.length - 1) {
+      if (onEnd) onEnd();
+    } else {
+      setSelectedIdx(selectedIdx + 1);
+    }
+  };
+
+  return (
+    <div style={{ position: "absolute", inset: 0 }}>
+      {selectedIdx === null ? (
+        <MobileProjectList onSelect={setSelectedIdx} />
+      ) : (
+        <MobileProjectDetail
+          projectIdx={selectedIdx}
+          onBack={() => setSelectedIdx(null)}
+          onNext={handleNext}
+          isLast={selectedIdx === PROJECTS.length - 1}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════ DESKTOP EXPERIENCE (unchanged) ═══════════════════════ */
 
 // ── SINGLE PROJECT CARD (birds-eye) ──
 function ProjectCard({ project, index, isLeft, onSelect }) {
@@ -586,6 +805,8 @@ function ZigzagView({ startProjectIdx, onBack, onEnd, cubeDims }) {
 
 // ── MAIN COMPONENT ──
 export default function ProjectCube({ projectId, onClose, onEnd }) {
+  const isMobile = useIsMobile();
+
   const startIdx = projectId === "__overview__"
     ? 0 : Math.max(PROJECTS.findIndex(p => p.id === projectId), 0);
 
@@ -607,6 +828,16 @@ export default function ProjectCube({ projectId, onClose, onEnd }) {
     setCubeDims(null);
   };
 
+  // ── MOBILE: touch-friendly list + scrollable detail ──
+  if (isMobile) {
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 500, backgroundColor: "transparent" }}>
+        <MobileProjects projectId={projectId} onEnd={onEnd} />
+      </div>
+    );
+  }
+
+  // ── DESKTOP: original birds-eye + 3D cube ──
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 500, backgroundColor: "transparent" }}>
       {(mode === "zigzag" || mode === "zigzag_settled") && (
