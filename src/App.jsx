@@ -20,6 +20,27 @@ function useIsMobile(breakpoint = 768) {
 
 const SPLINE_URL = "https://my.spline.design/cubegrid-xPAkTLRkTzAIBg5gnhcsRmHE/";
 
+// Set to true temporarily to SEE the tap zones (red boxes) while calibrating,
+// then set back to false
+const SHOW_HOTSPOTS = false;
+
+const DESKTOP_HOTSPOTS = [
+  { id: "chain", top: "28%", left: "28%", w: "14%", h: "14%" },
+  { id: "churn", top: "25%", left: "58%", w: "14%", h: "14%" },
+  { id: "youtube", top: "42%", left: "53%", w: "14%", h: "14%" },
+  { id: "eval", top: "45%", left: "24%", w: "14%", h: "14%" },
+];
+
+// Starting guesses for the zoomed-out mobile framing — calibrate these:
+// set SHOW_HOTSPOTS = true, open the site on your phone, and nudge the
+// percentages until each red box sits on its cube face
+const MOBILE_HOTSPOTS = [
+  { id: "chain", top: "36%", left: "22%", w: "22%", h: "10%" },
+  { id: "churn", top: "34%", left: "58%", w: "22%", h: "10%" },
+  { id: "youtube", top: "46%", left: "54%", w: "22%", h: "10%" },
+  { id: "eval", top: "48%", left: "20%", w: "22%", h: "10%" },
+];
+
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -136,12 +157,20 @@ export default function App() {
       }}>
         {/* Desktop: iframe stays mounted always (preloads + no reload on return).
             Mobile: unmount when off the cube page — a hidden WebGL scene keeps
-            rendering and lags the whole phone */}
+            rendering and lags the whole phone.
+            Mobile also renders the scene oversized then scales it down, which
+            effectively zooms the cube out on small screens */}
         {(!isMobile || onCubePage || !loaded) && (
           <iframe
             src={SPLINE_URL}
-            frameBorder="0" width="100%" height="100%"
+            frameBorder="0"
             title="Portfolio Cube"
+            style={isMobile ? {
+              width: "160vw", height: "160vh",
+              border: "none",
+              position: "absolute", top: "50%", left: "50%",
+              transform: "translate(-50%, -50%) scale(0.625)",
+            } : { width: "100%", height: "100%", border: "none" }}
           />
         )}
 
@@ -150,12 +179,7 @@ export default function App() {
             position: "absolute", inset: 0, zIndex: 15,
             pointerEvents: "none",
           }}>
-            {[
-              { id: "chain", top: "28%", left: "28%", w: "14%", h: "14%" },
-              { id: "churn", top: "25%", left: "58%", w: "14%", h: "14%" },
-              { id: "youtube", top: "42%", left: "53%", w: "14%", h: "14%" },
-              { id: "eval", top: "45%", left: "24%", w: "14%", h: "14%" },
-            ].map(({ id, top, left, w, h }) => (
+            {(isMobile ? MOBILE_HOTSPOTS : DESKTOP_HOTSPOTS).map(({ id, top, left, w, h }) => (
               <div
                 key={id}
                 onClick={(e) => { e.stopPropagation(); setActiveCubeProject(id); }}
@@ -164,6 +188,7 @@ export default function App() {
                   width: w, height: h,
                   cursor: "pointer",
                   pointerEvents: "all",
+                  background: SHOW_HOTSPOTS ? "rgba(255,0,0,0.3)" : "none",
                 }}
               />
             ))}
