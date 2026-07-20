@@ -24,6 +24,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [workOpen, setWorkOpen] = useState(false);
   const [activeCubeProject, setActiveCubeProject] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const splineRef = useRef(null);
   const hintRef = useRef(null);
   const isMobile = useIsMobile();
@@ -37,11 +38,13 @@ export default function App() {
     }
   }, [loaded]);
 
-  // FIX: Wait for Spline to load before allowing navigation
-  // Keep loader until spline iframe has had time to initialize
+  // Close the mobile menu whenever we navigate
+  useEffect(() => {
+    if (!isMobile) setMenuOpen(false);
+  }, [isMobile]);
+
   const handleLoaderComplete = () => {
     setLoaded(true);
-    // Give Spline 3 seconds to load in background before enabling nav
     setTimeout(() => setSplineReady(true), 3000);
     setTimeout(() => {
       if (splineRef.current) {
@@ -72,10 +75,16 @@ export default function App() {
   const navColor = isAboutPage ? "#050a1a" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.85)";
   const navBorder = isAboutPage ? "rgba(30,30,30,0.6)" : isGreenPage ? "rgba(74,222,128,0.5)" : "rgba(175,197,239,0.45)";
 
-  // Nav actions gated behind splineReady for work/about/projects
-  const safeAction = (fn) => () => {
-    if (!splineReady && !workOpen && !aboutOpen && !activeCubeProject) return;
-    fn();
+  const NAV_ITEMS = [
+    { label: "CUBE", action: goHome },
+    { label: "PROJECTS", action: () => { goHome(); setTimeout(() => setActiveCubeProject("__overview__"), 50); } },
+    { label: "WORK & ACHIEVEMENTS", action: () => { goHome(); setTimeout(() => setWorkOpen(true), 50); } },
+    { label: "ABOUT ME", action: () => { goHome(); setTimeout(() => setAboutOpen(true), 50); } },
+  ];
+
+  const runNav = (action) => {
+    setMenuOpen(false);
+    action();
   };
 
   return (
@@ -120,14 +129,13 @@ export default function App() {
                     width: w, height: h,
                     cursor: "pointer",
                     pointerEvents: "all",
-                    // background: "rgba(255,0,0,0.3)",
                   }}
                 />
               ))}
             </div>
           )}
 
-          {/* HOVER A FACE hint — only on cube page */}
+          {/* Hint — only on cube page */}
           {!aboutOpen && !workOpen && !activeCubeProject && (
             <div ref={hintRef} style={{
               position: "absolute", bottom: "32px", left: "50%",
@@ -166,17 +174,13 @@ export default function App() {
         />
       )}
 
-      {/* GLOBAL NAV */}
+      {/* ============ GLOBAL NAV ============ */}
       {loaded && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0,
           zIndex: 1000,
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
-          alignItems: isMobile ? "flex-start" : "center",
-          justifyContent: "space-between",
-          gap: isMobile ? "10px" : 0,
-          padding: isMobile ? "12px 16px" : "16px 40px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: isMobile ? "14px 20px" : "16px 40px",
           pointerEvents: "none",
           background: workOpen ? "rgba(5,10,26,0.9)" : "none",
           backdropFilter: workOpen ? "blur(6px)" : "none",
@@ -203,47 +207,121 @@ export default function App() {
             <div />
           )}
 
-          <div style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: isMobile ? "6px" : "8px",
-            pointerEvents: "all",
-            maxWidth: "100%",
-          }}>
-            {[
-              { label: "CUBE", action: goHome },
-              { label: "PROJECTS", action: () => { goHome(); setTimeout(() => setActiveCubeProject("__overview__"), 50); } },
-              { label: "WORK & ACHIEVEMENTS", action: () => { goHome(); setTimeout(() => setWorkOpen(true), 50); } },
-              { label: "ABOUT ME", action: () => { goHome(); setTimeout(() => setAboutOpen(true), 50); } },
-            ].map(({ label, action }) => (
-              <button
-                key={label}
-                onClick={(e) => { e.stopPropagation(); action(); }}
-                style={{
-                  background: isAboutPage ? "#4ade80" : "none",
-                  border: `1px solid ${navBorder}`,
-                  color: navColor,
-                  fontSize: isMobile ? "9px" : "10px",
-                  fontFamily: "monospace",
-                  letterSpacing: isMobile ? "0.12em" : "0.2em",
-                  padding: isMobile ? "7px 12px" : "8px 20px",
-                  borderRadius: "2px", cursor: "pointer",
-                  transition: "all 0.2s",
-                  whiteSpace: "nowrap",
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = isAboutPage ? "#050a1a" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.15)";
-                  e.currentTarget.style.color = isAboutPage ? "#4ade80" : isGreenPage ? "#050a1a" : "#fff";
-                  e.currentTarget.style.borderColor = isAboutPage ? "#4ade80" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.8)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = isAboutPage ? "#4ade80" : "none";
-                  e.currentTarget.style.color = navColor;
-                  e.currentTarget.style.borderColor = navBorder;
-                }}
-              >{label}</button>
-            ))}
-          </div>
+          {/* Desktop: button row */}
+          {!isMobile && (
+            <div style={{ display: "flex", gap: "8px", pointerEvents: "all" }}>
+              {NAV_ITEMS.map(({ label, action }) => (
+                <button
+                  key={label}
+                  onClick={(e) => { e.stopPropagation(); action(); }}
+                  style={{
+                    background: isAboutPage ? "#4ade80" : "none",
+                    border: `1px solid ${navBorder}`,
+                    color: navColor,
+                    fontSize: "10px", fontFamily: "monospace",
+                    letterSpacing: "0.2em", padding: "8px 20px",
+                    borderRadius: "2px", cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = isAboutPage ? "#050a1a" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.15)";
+                    e.currentTarget.style.color = isAboutPage ? "#4ade80" : isGreenPage ? "#050a1a" : "#fff";
+                    e.currentTarget.style.borderColor = isAboutPage ? "#4ade80" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.8)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = isAboutPage ? "#4ade80" : "none";
+                    e.currentTarget.style.color = navColor;
+                    e.currentTarget.style.borderColor = navBorder;
+                  }}
+                >{label}</button>
+              ))}
+            </div>
+          )}
+
+          {/* Mobile: hamburger button */}
+          {isMobile && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o); }}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              style={{
+                pointerEvents: "all",
+                background: menuOpen ? "rgba(74,222,128,0.12)" : "none",
+                border: `1px solid ${isAboutPage ? "rgba(74,222,128,0.5)" : navBorder}`,
+                borderRadius: "4px",
+                width: "40px", height: "40px",
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                gap: "5px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {/* three bars → X when open */}
+              <span style={{
+                display: "block", width: "18px", height: "2px",
+                background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
+                borderRadius: "1px",
+                transition: "transform 0.25s, opacity 0.25s",
+                transform: menuOpen ? "translateY(7px) rotate(45deg)" : "none",
+              }} />
+              <span style={{
+                display: "block", width: "18px", height: "2px",
+                background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
+                borderRadius: "1px",
+                transition: "opacity 0.2s",
+                opacity: menuOpen ? 0 : 1,
+              }} />
+              <span style={{
+                display: "block", width: "18px", height: "2px",
+                background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
+                borderRadius: "1px",
+                transition: "transform 0.25s",
+                transform: menuOpen ? "translateY(-7px) rotate(-45deg)" : "none",
+              }} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Mobile: full-screen menu overlay */}
+      {loaded && isMobile && menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 999,
+            background: "rgba(5, 13, 6, 0.96)",
+            backdropFilter: "blur(8px)",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          {NAV_ITEMS.map(({ label, action }, i) => (
+            <button
+              key={label}
+              onClick={(e) => { e.stopPropagation(); runNav(action); }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#4ade80",
+                fontSize: "22px",
+                fontWeight: "800",
+                fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                letterSpacing: "0.04em",
+                padding: "16px 24px",
+                cursor: "pointer",
+                width: "100%",
+                textAlign: "center",
+              }}
+            >{label}</button>
+          ))}
+          <span style={{
+            marginTop: "24px",
+            fontFamily: "monospace",
+            fontSize: "10px",
+            letterSpacing: "0.25em",
+            color: "rgba(175,197,239,0.35)",
+          }}>TAP ANYWHERE TO CLOSE</span>
         </div>
       )}
     </div>
