@@ -20,27 +20,6 @@ function useIsMobile(breakpoint = 768) {
 
 const SPLINE_URL = "https://my.spline.design/cubegrid-xPAkTLRkTzAIBg5gnhcsRmHE/";
 
-// Set to true temporarily to SEE the tap zones (red boxes) while calibrating,
-// then set back to false
-const SHOW_HOTSPOTS = false;
-
-const DESKTOP_HOTSPOTS = [
-  { id: "chain", top: "28%", left: "28%", w: "14%", h: "14%" },
-  { id: "churn", top: "25%", left: "58%", w: "14%", h: "14%" },
-  { id: "youtube", top: "42%", left: "53%", w: "14%", h: "14%" },
-  { id: "eval", top: "45%", left: "24%", w: "14%", h: "14%" },
-];
-
-// Starting guesses for the zoomed-out mobile framing — calibrate these:
-// set SHOW_HOTSPOTS = true, open the site on your phone, and nudge the
-// percentages until each red box sits on its cube face
-const MOBILE_HOTSPOTS = [
-  { id: "chain", top: "36%", left: "22%", w: "22%", h: "10%" },
-  { id: "churn", top: "34%", left: "58%", w: "22%", h: "10%" },
-  { id: "youtube", top: "46%", left: "54%", w: "22%", h: "10%" },
-  { id: "eval", top: "48%", left: "20%", w: "22%", h: "10%" },
-];
-
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -157,20 +136,12 @@ export default function App() {
       }}>
         {/* Desktop: iframe stays mounted always (preloads + no reload on return).
             Mobile: unmount when off the cube page — a hidden WebGL scene keeps
-            rendering and lags the whole phone.
-            Mobile also renders the scene oversized then scales it down, which
-            effectively zooms the cube out on small screens */}
+            rendering and lags the whole phone */}
         {(!isMobile || onCubePage || !loaded) && (
           <iframe
             src={SPLINE_URL}
-            frameBorder="0"
+            frameBorder="0" width="100%" height="100%"
             title="Portfolio Cube"
-            style={isMobile ? {
-              width: "160vw", height: "160vh",
-              border: "none",
-              position: "absolute", top: "50%", left: "50%",
-              transform: "translate(-50%, -50%) scale(0.625)",
-            } : { width: "100%", height: "100%", border: "none" }}
           />
         )}
 
@@ -179,7 +150,12 @@ export default function App() {
             position: "absolute", inset: 0, zIndex: 15,
             pointerEvents: "none",
           }}>
-            {(isMobile ? MOBILE_HOTSPOTS : DESKTOP_HOTSPOTS).map(({ id, top, left, w, h }) => (
+            {[
+              { id: "chain", top: "28%", left: "28%", w: "14%", h: "14%" },
+              { id: "churn", top: "25%", left: "58%", w: "14%", h: "14%" },
+              { id: "youtube", top: "42%", left: "53%", w: "14%", h: "14%" },
+              { id: "eval", top: "45%", left: "24%", w: "14%", h: "14%" },
+            ].map(({ id, top, left, w, h }) => (
               <div
                 key={id}
                 onClick={(e) => { e.stopPropagation(); setActiveCubeProject(id); }}
@@ -188,7 +164,6 @@ export default function App() {
                   width: w, height: h,
                   cursor: "pointer",
                   pointerEvents: "all",
-                  background: SHOW_HOTSPOTS ? "rgba(255,0,0,0.3)" : "none",
                 }}
               />
             ))}
@@ -198,7 +173,7 @@ export default function App() {
         {/* Hint — only on cube page */}
         {loaded && onCubePage && (
           <div ref={hintRef} style={{
-            position: "absolute", bottom: "32px", left: "50%",
+            position: "absolute", bottom: isMobile ? "100px" : "32px", left: "50%",
             transform: "translateX(-50%)", opacity: 0,
             display: "flex", alignItems: "center", gap: "8px",
             pointerEvents: "none",
@@ -209,183 +184,193 @@ export default function App() {
               color: "rgba(175,197,239,0.4)", fontSize: "11px",
               fontFamily: "monospace", letterSpacing: "0.2em",
               textAlign: "center",
-            }}>{isMobile ? "TAP A FACE TO EXPLORE" : "HOVER A FACE · CLICK TO EXPLORE"}</span>
+            }}>{isMobile ? "PINCH TO ZOOM OUT" : "HOVER A FACE · CLICK TO EXPLORE"}</span>
           </div>
         )}
       </div>
 
-      {workOpen && (
-        <Work onClose={() => setWorkOpen(false)} onEnd={handleWorkEnd} />
-      )}
+      {
+        workOpen && (
+          <Work onClose={() => setWorkOpen(false)} onEnd={handleWorkEnd} />
+        )
+      }
 
-      {aboutOpen && (
-        <About
-          onClose={() => setAboutOpen(false)}
-          onEnd={handleAboutEnd}
-          onTop={handleAboutTop}
-        />
-      )}
+      {
+        aboutOpen && (
+          <About
+            onClose={() => setAboutOpen(false)}
+            onEnd={handleAboutEnd}
+            onTop={handleAboutTop}
+          />
+        )
+      }
 
-      {activeCubeProject && (
-        <ProjectCube
-          projectId={activeCubeProject}
-          onClose={() => setActiveCubeProject(null)}
-          onEnd={() => {
-            setActiveCubeProject(null);
-            setWorkOpen(true);
-          }}
-        />
-      )}
+      {
+        activeCubeProject && (
+          <ProjectCube
+            projectId={activeCubeProject}
+            onClose={() => setActiveCubeProject(null)}
+            onEnd={() => {
+              setActiveCubeProject(null);
+              setWorkOpen(true);
+            }}
+          />
+        )
+      }
 
       {/* ============ GLOBAL NAV ============ */}
-      {loaded && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0,
-          zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: isMobile ? "14px 20px" : "16px 40px",
-          pointerEvents: "none",
-          background: workOpen ? "rgba(5,10,26,0.9)" : "none",
-          backdropFilter: workOpen ? "blur(6px)" : "none",
-          borderBottom: workOpen ? "1px solid rgba(74,222,128,0.06)" : "none",
-          transition: "background 0.3s ease",
-        }}>
+      {
+        loaded && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, right: 0,
+            zIndex: 1000,
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: isMobile ? "14px 20px" : "16px 40px",
+            pointerEvents: "none",
+            background: workOpen ? "rgba(5,10,26,0.9)" : "none",
+            backdropFilter: workOpen ? "blur(6px)" : "none",
+            borderBottom: workOpen ? "1px solid rgba(74,222,128,0.06)" : "none",
+            transition: "background 0.3s ease",
+          }}>
 
-          {!aboutOpen ? (
-            <span
-              onClick={goHome}
-              style={{
-                fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                fontSize: isMobile ? "20px" : "28px",
-                fontWeight: "900",
-                letterSpacing: isMobile ? "-1px" : "-2px",
-                background: "linear-gradient(135deg, #166534, #4ade80, #bbf7d0)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                cursor: "pointer",
-                pointerEvents: "all",
-              }}>trisha shishodiya</span>
-          ) : (
-            <div />
-          )}
+            {!aboutOpen ? (
+              <span
+                onClick={goHome}
+                style={{
+                  fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                  fontSize: isMobile ? "20px" : "28px",
+                  fontWeight: "900",
+                  letterSpacing: isMobile ? "-1px" : "-2px",
+                  background: "linear-gradient(135deg, #166534, #4ade80, #bbf7d0)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  cursor: "pointer",
+                  pointerEvents: "all",
+                }}>trisha shishodiya</span>
+            ) : (
+              <div />
+            )}
 
-          {/* Desktop: button row */}
-          {!isMobile && (
-            <div style={{ display: "flex", gap: "8px", pointerEvents: "all" }}>
-              {NAV_ITEMS.map(({ label, action }) => (
-                <button
-                  key={label}
-                  onClick={(e) => { e.stopPropagation(); action(); }}
-                  style={{
-                    background: isAboutPage ? "#4ade80" : "none",
-                    border: `1px solid ${navBorder}`,
-                    color: navColor,
-                    fontSize: "10px", fontFamily: "monospace",
-                    letterSpacing: "0.2em", padding: "8px 20px",
-                    borderRadius: "2px", cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = isAboutPage ? "#050a1a" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.15)";
-                    e.currentTarget.style.color = isAboutPage ? "#4ade80" : isGreenPage ? "#050a1a" : "#fff";
-                    e.currentTarget.style.borderColor = isAboutPage ? "#4ade80" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.8)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = isAboutPage ? "#4ade80" : "none";
-                    e.currentTarget.style.color = navColor;
-                    e.currentTarget.style.borderColor = navBorder;
-                  }}
-                >{label}</button>
-              ))}
-            </div>
-          )}
+            {/* Desktop: button row */}
+            {!isMobile && (
+              <div style={{ display: "flex", gap: "8px", pointerEvents: "all" }}>
+                {NAV_ITEMS.map(({ label, action }) => (
+                  <button
+                    key={label}
+                    onClick={(e) => { e.stopPropagation(); action(); }}
+                    style={{
+                      background: isAboutPage ? "#4ade80" : "none",
+                      border: `1px solid ${navBorder}`,
+                      color: navColor,
+                      fontSize: "10px", fontFamily: "monospace",
+                      letterSpacing: "0.2em", padding: "8px 20px",
+                      borderRadius: "2px", cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = isAboutPage ? "#050a1a" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.15)";
+                      e.currentTarget.style.color = isAboutPage ? "#4ade80" : isGreenPage ? "#050a1a" : "#fff";
+                      e.currentTarget.style.borderColor = isAboutPage ? "#4ade80" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.8)";
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = isAboutPage ? "#4ade80" : "none";
+                      e.currentTarget.style.color = navColor;
+                      e.currentTarget.style.borderColor = navBorder;
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+            )}
 
-          {/* Mobile: hamburger button */}
-          {isMobile && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o); }}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              style={{
-                pointerEvents: "all",
-                background: menuOpen ? "rgba(74,222,128,0.12)" : "none",
-                border: `1px solid ${isAboutPage ? "rgba(74,222,128,0.5)" : navBorder}`,
-                borderRadius: "4px",
-                width: "40px", height: "40px",
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                gap: "5px",
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-            >
-              <span style={{
-                display: "block", width: "18px", height: "2px",
-                background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
-                borderRadius: "1px",
-                transition: "transform 0.25s, opacity 0.25s",
-                transform: menuOpen ? "translateY(7px) rotate(45deg)" : "none",
-              }} />
-              <span style={{
-                display: "block", width: "18px", height: "2px",
-                background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
-                borderRadius: "1px",
-                transition: "opacity 0.2s",
-                opacity: menuOpen ? 0 : 1,
-              }} />
-              <span style={{
-                display: "block", width: "18px", height: "2px",
-                background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
-                borderRadius: "1px",
-                transition: "transform 0.25s",
-                transform: menuOpen ? "translateY(-7px) rotate(-45deg)" : "none",
-              }} />
-            </button>
-          )}
-        </div>
-      )}
+            {/* Mobile: hamburger button */}
+            {isMobile && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o); }}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                style={{
+                  pointerEvents: "all",
+                  background: menuOpen ? "rgba(74,222,128,0.12)" : "none",
+                  border: `1px solid ${isAboutPage ? "rgba(74,222,128,0.5)" : navBorder}`,
+                  borderRadius: "4px",
+                  width: "40px", height: "40px",
+                  display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center",
+                  gap: "5px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                <span style={{
+                  display: "block", width: "18px", height: "2px",
+                  background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
+                  borderRadius: "1px",
+                  transition: "transform 0.25s, opacity 0.25s",
+                  transform: menuOpen ? "translateY(7px) rotate(45deg)" : "none",
+                }} />
+                <span style={{
+                  display: "block", width: "18px", height: "2px",
+                  background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
+                  borderRadius: "1px",
+                  transition: "opacity 0.2s",
+                  opacity: menuOpen ? 0 : 1,
+                }} />
+                <span style={{
+                  display: "block", width: "18px", height: "2px",
+                  background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
+                  borderRadius: "1px",
+                  transition: "transform 0.25s",
+                  transform: menuOpen ? "translateY(-7px) rotate(-45deg)" : "none",
+                }} />
+              </button>
+            )}
+          </div>
+        )
+      }
 
       {/* Mobile: full-screen menu overlay */}
-      {loaded && isMobile && menuOpen && (
-        <div
-          onClick={() => setMenuOpen(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 999,
-            background: "rgba(5, 13, 6, 0.96)",
-            backdropFilter: "blur(8px)",
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            gap: "8px",
-          }}
-        >
-          {NAV_ITEMS.map(({ label, action }) => (
-            <button
-              key={label}
-              onClick={(e) => { e.stopPropagation(); runNav(action); }}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#4ade80",
-                fontSize: "22px",
-                fontWeight: "800",
-                fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                letterSpacing: "0.04em",
-                padding: "16px 24px",
-                cursor: "pointer",
-                width: "100%",
-                textAlign: "center",
-              }}
-            >{label}</button>
-          ))}
-          <span style={{
-            marginTop: "24px",
-            fontFamily: "monospace",
-            fontSize: "10px",
-            letterSpacing: "0.25em",
-            color: "rgba(175,197,239,0.35)",
-          }}>TAP ANYWHERE TO CLOSE</span>
-        </div>
-      )}
-    </div>
+      {
+        loaded && isMobile && menuOpen && (
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 999,
+              background: "rgba(5, 13, 6, 0.96)",
+              backdropFilter: "blur(8px)",
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              gap: "8px",
+            }}
+          >
+            {NAV_ITEMS.map(({ label, action }) => (
+              <button
+                key={label}
+                onClick={(e) => { e.stopPropagation(); runNav(action); }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#4ade80",
+                  fontSize: "22px",
+                  fontWeight: "800",
+                  fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                  letterSpacing: "0.04em",
+                  padding: "16px 24px",
+                  cursor: "pointer",
+                  width: "100%",
+                  textAlign: "center",
+                }}
+              >{label}</button>
+            ))}
+            <span style={{
+              marginTop: "24px",
+              fontFamily: "monospace",
+              fontSize: "10px",
+              letterSpacing: "0.25em",
+              color: "rgba(175,197,239,0.35)",
+            }}>TAP ANYWHERE TO CLOSE</span>
+          </div>
+        )
+      }
+    </div >
   );
 }
