@@ -184,7 +184,7 @@ export default function App() {
               color: "rgba(175,197,239,0.4)", fontSize: "11px",
               fontFamily: "monospace", letterSpacing: "0.2em",
               textAlign: "center",
-            }}>{isMobile ? "PINCH TO ZOOM OUT" : "HOVER A FACE · CLICK TO EXPLORE"}</span>
+            }}>{isMobile ? "PINCH TO ZOOM OUT ON THE CUBE" : "HOVER A FACE · CLICK TO EXPLORE"}</span>
           </div>
         )}
       </div>
