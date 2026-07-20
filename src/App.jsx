@@ -18,9 +18,10 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+const SPLINE_URL = "https://my.spline.design/cubegrid-xPAkTLRkTzAIBg5gnhcsRmHE/";
+
 export default function App() {
   const [loaded, setLoaded] = useState(false);
-  const [splineReady, setSplineReady] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [workOpen, setWorkOpen] = useState(false);
   const [activeCubeProject, setActiveCubeProject] = useState(null);
@@ -38,14 +39,12 @@ export default function App() {
     }
   }, [loaded]);
 
-  // Close the mobile menu whenever we navigate
   useEffect(() => {
     if (!isMobile) setMenuOpen(false);
   }, [isMobile]);
 
   const handleLoaderComplete = () => {
     setLoaded(true);
-    setTimeout(() => setSplineReady(true), 3000);
     setTimeout(() => {
       if (splineRef.current) {
         gsap.fromTo(splineRef.current,
@@ -62,9 +61,16 @@ export default function App() {
     setActiveCubeProject(null);
   };
 
+  // Bottom of Work → About (single render, no flash)
   const handleWorkEnd = () => {
     setWorkOpen(false);
-    setTimeout(() => setAboutOpen(true), 100);
+    setAboutOpen(true);
+  };
+
+  // Scroll up at top of About → back to Work
+  const handleAboutTop = () => {
+    setAboutOpen(false);
+    setWorkOpen(true);
   };
 
   const handleAboutEnd = () => { };
@@ -75,11 +81,30 @@ export default function App() {
   const navColor = isAboutPage ? "#050a1a" : isGreenPage ? "#4ade80" : "rgba(175,197,239,0.85)";
   const navBorder = isAboutPage ? "rgba(30,30,30,0.6)" : isGreenPage ? "rgba(74,222,128,0.5)" : "rgba(175,197,239,0.45)";
 
+  const onCubePage = !aboutOpen && !workOpen && !activeCubeProject;
+
+  // State set directly — no goHome + setTimeout dance (that caused a
+  // one-frame flash of the cube page when switching pages)
   const NAV_ITEMS = [
     { label: "CUBE", action: goHome },
-    { label: "PROJECTS", action: () => { goHome(); setTimeout(() => setActiveCubeProject("__overview__"), 50); } },
-    { label: "WORK & ACHIEVEMENTS", action: () => { goHome(); setTimeout(() => setWorkOpen(true), 50); } },
-    { label: "ABOUT ME", action: () => { goHome(); setTimeout(() => setAboutOpen(true), 50); } },
+    {
+      label: "PROJECTS", action: () => {
+        setAboutOpen(false); setWorkOpen(false);
+        setActiveCubeProject("__overview__");
+      }
+    },
+    {
+      label: "WORK & ACHIEVEMENTS", action: () => {
+        setAboutOpen(false); setActiveCubeProject(null);
+        setWorkOpen(true);
+      }
+    },
+    {
+      label: "ABOUT ME", action: () => {
+        setWorkOpen(false); setActiveCubeProject(null);
+        setAboutOpen(true);
+      }
+    },
   ];
 
   const runNav = (action) => {
@@ -98,69 +123,77 @@ export default function App() {
     }}>
       {!loaded && <Loader onComplete={handleLoaderComplete} />}
 
-      {loaded && (
-        <div ref={splineRef} style={{
-          width: "100vw", height: "100vh",
-          overflow: "hidden", opacity: 0,
-          position: "relative",
-        }}>
-          <iframe
-            src={!splineReady || aboutOpen || workOpen || activeCubeProject ? undefined : "https://my.spline.design/cubegrid-xPAkTLRkTzAIBg5gnhcsRmHE/"}
-            frameBorder="0" width="100%" height="100%"
-            title="Portfolio Cube"
-          />
+      {/* Spline mounts IMMEDIATELY (behind the loader) so it loads during
+          the 0-100 counter — and its src never changes, so navigating away
+          and back doesn't force a reload */}
+      <div ref={splineRef} style={{
+        width: "100vw", height: "100vh",
+        overflow: "hidden",
+        opacity: loaded ? undefined : 0,
+        position: "relative",
+        // hide the cube page underneath overlays so it can't bleed through
+        visibility: onCubePage || !loaded ? "visible" : "hidden",
+      }}>
+        <iframe
+          src={SPLINE_URL}
+          frameBorder="0" width="100%" height="100%"
+          title="Portfolio Cube"
+        />
 
-          {!aboutOpen && !workOpen && !activeCubeProject && (
-            <div style={{
-              position: "absolute", inset: 0, zIndex: 15,
-              pointerEvents: "none",
-            }}>
-              {[
-                { id: "chain", top: "28%", left: "28%", w: "14%", h: "14%" },
-                { id: "churn", top: "25%", left: "58%", w: "14%", h: "14%" },
-                { id: "youtube", top: "42%", left: "53%", w: "14%", h: "14%" },
-                { id: "eval", top: "45%", left: "24%", w: "14%", h: "14%" },
-              ].map(({ id, top, left, w, h }) => (
-                <div
-                  key={id}
-                  onClick={(e) => { e.stopPropagation(); setActiveCubeProject(id); }}
-                  style={{
-                    position: "absolute", top, left,
-                    width: w, height: h,
-                    cursor: "pointer",
-                    pointerEvents: "all",
-                  }}
-                />
-              ))}
-            </div>
-          )}
+        {loaded && onCubePage && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 15,
+            pointerEvents: "none",
+          }}>
+            {[
+              { id: "chain", top: "28%", left: "28%", w: "14%", h: "14%" },
+              { id: "churn", top: "25%", left: "58%", w: "14%", h: "14%" },
+              { id: "youtube", top: "42%", left: "53%", w: "14%", h: "14%" },
+              { id: "eval", top: "45%", left: "24%", w: "14%", h: "14%" },
+            ].map(({ id, top, left, w, h }) => (
+              <div
+                key={id}
+                onClick={(e) => { e.stopPropagation(); setActiveCubeProject(id); }}
+                style={{
+                  position: "absolute", top, left,
+                  width: w, height: h,
+                  cursor: "pointer",
+                  pointerEvents: "all",
+                }}
+              />
+            ))}
+          </div>
+        )}
 
-          {/* Hint — only on cube page */}
-          {!aboutOpen && !workOpen && !activeCubeProject && (
-            <div ref={hintRef} style={{
-              position: "absolute", bottom: "32px", left: "50%",
-              transform: "translateX(-50%)", opacity: 0,
-              display: "flex", alignItems: "center", gap: "8px",
-              pointerEvents: "none",
-              width: "max-content",
-              maxWidth: "90vw",
-            }}>
-              <span style={{
-                color: "rgba(175,197,239,0.4)", fontSize: "11px",
-                fontFamily: "monospace", letterSpacing: "0.2em",
-                textAlign: "center",
-              }}>{isMobile ? "TAP A FACE TO EXPLORE" : "HOVER A FACE · CLICK TO EXPLORE"}</span>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Hint — only on cube page */}
+        {loaded && onCubePage && (
+          <div ref={hintRef} style={{
+            position: "absolute", bottom: "32px", left: "50%",
+            transform: "translateX(-50%)", opacity: 0,
+            display: "flex", alignItems: "center", gap: "8px",
+            pointerEvents: "none",
+            width: "max-content",
+            maxWidth: "90vw",
+          }}>
+            <span style={{
+              color: "rgba(175,197,239,0.4)", fontSize: "11px",
+              fontFamily: "monospace", letterSpacing: "0.2em",
+              textAlign: "center",
+            }}>{isMobile ? "TAP A FACE TO EXPLORE" : "HOVER A FACE · CLICK TO EXPLORE"}</span>
+          </div>
+        )}
+      </div>
 
       {workOpen && (
         <Work onClose={() => setWorkOpen(false)} onEnd={handleWorkEnd} />
       )}
 
       {aboutOpen && (
-        <About onClose={() => setAboutOpen(false)} onEnd={handleAboutEnd} />
+        <About
+          onClose={() => setAboutOpen(false)}
+          onEnd={handleAboutEnd}
+          onTop={handleAboutTop}
+        />
       )}
 
       {activeCubeProject && (
@@ -169,7 +202,7 @@ export default function App() {
           onClose={() => setActiveCubeProject(null)}
           onEnd={() => {
             setActiveCubeProject(null);
-            setTimeout(() => setWorkOpen(true), 100);
+            setWorkOpen(true);
           }}
         />
       )}
@@ -256,7 +289,6 @@ export default function App() {
                 transition: "all 0.2s",
               }}
             >
-              {/* three bars → X when open */}
               <span style={{
                 display: "block", width: "18px", height: "2px",
                 background: isAboutPage && !menuOpen ? "#050a1a" : "#4ade80",
@@ -296,7 +328,7 @@ export default function App() {
             gap: "8px",
           }}
         >
-          {NAV_ITEMS.map(({ label, action }, i) => (
+          {NAV_ITEMS.map(({ label, action }) => (
             <button
               key={label}
               onClick={(e) => { e.stopPropagation(); runNav(action); }}

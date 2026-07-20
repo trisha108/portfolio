@@ -114,7 +114,7 @@ function SkillIcon({ skill }) {
   );
 }
 
-export default function About({ onClose, onEnd }) {
+export default function About({ onClose, onEnd, onTop }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -139,15 +139,50 @@ export default function About({ onClose, onEnd }) {
       );
     });
 
+    // ScrollTrigger measures the custom scroller before layout settles;
+    // refresh after mount so section animations fire at the right positions
+    const refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 300);
+
     const el = containerRef.current;
     const onScroll = () => {
       const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
       if (atBottom && onEnd) onEnd();
     };
+
+    // Scroll UP while already at the top → go back to Work page
+    let backFired = false;
+    let wheelAcc = 0;
+    const onWheel = (e) => {
+      if (!onTop || backFired) return;
+      if (el.scrollTop <= 0 && e.deltaY < 0) {
+        wheelAcc += -e.deltaY;
+        if (wheelAcc > 120) { backFired = true; onTop(); }
+      } else {
+        wheelAcc = 0;
+      }
+    };
+    let touchStartY = null;
+    const onTouchStart = (e) => { touchStartY = e.touches[0].clientY; };
+    const onTouchMove = (e) => {
+      if (!onTop || backFired || touchStartY === null) return;
+      const dy = e.touches[0].clientY - touchStartY; // finger pulled down = scroll up
+      if (el.scrollTop <= 0 && dy > 90) { backFired = true; onTop(); }
+    };
+    const onTouchEnd = () => { touchStartY = null; };
+
     el.addEventListener("scroll", onScroll);
+    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
+      clearTimeout(refreshTimer);
       ScrollTrigger.getAll().forEach(t => t.kill());
       el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
     };
   }, []);
 
