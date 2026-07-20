@@ -173,7 +173,7 @@ export default function App() {
         {/* Hint — only on cube page */}
         {loaded && onCubePage && (
           <div ref={hintRef} style={{
-            position: "absolute", bottom: isMobile ? "100px" : "32px", left: "50%",
+            position: "absolute", bottom: isMobile ? "150px" : "32px", left: "50%",
             transform: "translateX(-50%)", opacity: 0,
             display: "flex", alignItems: "center", gap: "8px",
             pointerEvents: "none",
