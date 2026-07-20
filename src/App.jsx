@@ -134,11 +134,16 @@ export default function App() {
         // hide the cube page underneath overlays so it can't bleed through
         visibility: onCubePage || !loaded ? "visible" : "hidden",
       }}>
-        <iframe
-          src={SPLINE_URL}
-          frameBorder="0" width="100%" height="100%"
-          title="Portfolio Cube"
-        />
+        {/* Desktop: iframe stays mounted always (preloads + no reload on return).
+            Mobile: unmount when off the cube page — a hidden WebGL scene keeps
+            rendering and lags the whole phone */}
+        {(!isMobile || onCubePage || !loaded) && (
+          <iframe
+            src={SPLINE_URL}
+            frameBorder="0" width="100%" height="100%"
+            title="Portfolio Cube"
+          />
+        )}
 
         {loaded && onCubePage && (
           <div style={{
